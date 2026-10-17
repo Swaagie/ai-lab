@@ -136,9 +136,9 @@ model differs.
 The server exposes an OpenAI-compatible API, authenticated with the API key
 from your `.env` file:
 
-- Base URL: http://localhost:58080
-- POST /v1/chat/completions
-- GET /v1/models
+- Base URL: `http://localhost:58080`
+- POST `/v1/chat/completions`
+- GET `/v1/models`
 
 ```bash
 curl -s http://localhost:58080/v1/chat/completions \
