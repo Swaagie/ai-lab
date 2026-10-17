@@ -9,7 +9,7 @@ on:
 jobs:
   super-linter:
     name: Super-Linter
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       packages: read
@@ -35,7 +35,7 @@ jobs:
 
   link-check:
     name: Link Validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -50,7 +50,7 @@ jobs:
 
   spell-check:
     name: Spell Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -62,7 +62,7 @@ jobs:
 
   compose-validation:
     name: Docker Compose Validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -107,7 +107,7 @@ jobs:
 
   env-documentation:
     name: Environment Variable Documentation Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
