@@ -264,7 +264,7 @@ goose run --provider custom_localhost --model qwen3.8 -t "Hello from the home la
 
 In an interactive session, switch providers/models at any time with:
 
-```
+```bash
 /model --provider custom_localhost qwen3.8
 ```
 
