@@ -1,0 +1,52 @@
+name: ai-lab
+
+services:
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: llama
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        exec /app/llama-server
+        --host 0.0.0.0 --port $$PORT
+        --model /models/$$MODEL_FILE
+        --alias $$MODEL_NAME
+        --ctx-size $$NUM_CTX
+        --n-predict -1
+        --n-gpu-layers $$NUM_GPU
+        --parallel $$NUM_PARALLEL
+        --threads $${NUM_THREAD:-$$(nproc)}
+        --sleep-idle-seconds $$SLEEP_IDLE_SECONDS
+        --api-key $$API_KEY
+        --cors-origins $$CORS_ORIGINS
+        --no-cors-credentials
+        --no-slots
+    environment:
+      PORT: ${PORT:-58080}
+      MODEL_NAME: ${MODEL_NAME:-qwen3.8}
+      MODEL_FILE: ${MODEL_FILE:-Qwen3.8-27B-UD-Q5_K_M.gguf}
+      NUM_CTX: ${NUM_CTX:-65536}
+      NUM_GPU: ${NUM_GPU:-999}
+      NUM_PARALLEL: ${NUM_PARALLEL:-1}
+      NUM_THREAD: ${NUM_THREAD:-}
+      SLEEP_IDLE_SECONDS: ${SLEEP_IDLE_SECONDS:-300}
+      API_KEY: ${API_KEY:?API_KEY must be set, see .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:58080}
+    ports:
+      - "${PORT:-58080}:${PORT:-58080}"
+    volumes:
+      - ./models:/models:ro
+    devices:
+      - nvidia.com/gpu=all
+    security_opt:
+      - label=disable
+    cpus: 12
+    mem_limit: 32g
+    pids_limit: 512
+    networks:
+      - ai-lab
+    restart: unless-stopped
+
+networks:
+  ai-lab:
+    name: ai-lab
