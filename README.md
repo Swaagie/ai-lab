@@ -1,6 +1,6 @@
 # ai-lab: Local LLM Server on Bazzite
 
-> Work in progress experiment, your here for the experiment and learnings.
+> Work in progress, your here for the experiment and learnings.
 
 Runs a local LLM server on Bazzite (immutable Fedora) using podman and CDI
 (Container Device Interface) for NVIDIA GPU passthrough. The server is
