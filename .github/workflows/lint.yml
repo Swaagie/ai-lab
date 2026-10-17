@@ -27,17 +27,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Only validate modified files on PRs
           VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' }}
-          # Enable only the linters we need
+          # Run only these specific linters (exclude all others by default)
+          FILTER_REGEX_INCLUDE: .*\.(md|ya?ml|json)$
           VALIDATE_MARKDOWN: true
           VALIDATE_YAML: true
-          # Disable everything else
-          VALIDATE_BASH: false
-          VALIDATE_DOCKERFILE: false
-          VALIDATE_EDITORCONFIG: false
-          VALIDATE_ENV: false
           VALIDATE_JSON: true
-          VALIDATE_PYTHON: false
-          VALIDATE_XML: false
 
   link-check:
     name: Link Validation
