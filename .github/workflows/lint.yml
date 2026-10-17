@@ -1,0 +1,149 @@
+name: Lint
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  super-linter:
+    name: Super-Linter
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Super-Linter
+        uses: super-linter/super-linter@v7
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Only validate modified files on PRs
+          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' }}
+          # Enable only the linters we need
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
+          # Disable everything else
+          VALIDATE_BASH: false
+          VALIDATE_DOCKERFILE: false
+          VALIDATE_EDITORCONFIG: false
+          VALIDATE_ENV: false
+          VALIDATE_JSON: true
+          VALIDATE_PYTHON: false
+          VALIDATE_XML: false
+
+  link-check:
+    name: Link Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check links in markdown files
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          config-file: '.github/markdown-link-check-config.json'
+          check-modified-files-only: 'no'
+
+  spell-check:
+    name: Spell Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check spelling
+        uses: crate-ci/typos@master
+        with:
+          files: '*.md'
+
+  compose-validation:
+    name: Docker Compose Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create dummy .env file
+        run: |
+          cat > .env << 'EOF'
+          PORT=58080
+          MODEL_NAME=test-model
+          MODEL_FILE=test.gguf
+          NUM_CTX=65536
+          NUM_GPU=999
+          NUM_PARALLEL=1
+          NUM_THREAD=8
+          SLEEP_IDLE_SECONDS=300
+          API_KEY=test-key-for-validation
+          CORS_ORIGINS=http://localhost:58080
+          EOF
+
+      - name: Create dummy models directory
+        run: mkdir -p models
+
+      - name: Validate compose file
+        run: docker compose config --quiet
+
+      - name: Check for common issues
+        run: |
+          echo "Checking for required environment variables..."
+          grep -q 'API_KEY:?\|API_KEY must be set' compose.yaml && echo "✓ API_KEY validation found" || exit 1
+          
+          echo "Checking GPU device configuration..."
+          grep -q 'nvidia.com/gpu' compose.yaml && echo "✓ GPU device configuration found" || exit 1
+          
+          echo "Checking resource limits..."
+          grep -q 'cpus:' compose.yaml && echo "✓ CPU limit found" || exit 1
+          grep -q 'mem_limit:' compose.yaml && echo "✓ Memory limit found" || exit 1
+          
+          echo "All checks passed!"
+
+  env-documentation:
+    name: Environment Variable Documentation Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract env vars from compose.yaml
+        id: compose-vars
+        run: |
+          echo "Extracting environment variables from compose.yaml..."
+          grep -A 20 'environment:' compose.yaml | \
+            grep '^\s*[A-Z_]*:' | \
+            sed 's/:.*//' | \
+            sed 's/^\s*//' | \
+            sort -u > /tmp/compose-vars.txt
+          cat /tmp/compose-vars.txt
+
+      - name: Check if all env vars are documented in README
+        run: |
+          echo "Checking if all environment variables are documented..."
+          missing_vars=()
+          
+          while IFS= read -r var; do
+            if ! grep -q "$var" README.md; then
+              missing_vars+=("$var")
+            fi
+          done < /tmp/compose-vars.txt
+          
+          if [ ${#missing_vars[@]} -gt 0 ]; then
+            echo "❌ The following environment variables are not documented in README.md:"
+            printf '%s\n' "${missing_vars[@]}"
+            exit 1
+          else
+            echo "✓ All environment variables are documented"
+          fi
