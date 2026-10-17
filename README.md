@@ -94,6 +94,7 @@ configured model alias.
 Most settings are environment variables, overridable via a `.env` file in the
 project root or inline on the command line. Defined in compose.yaml:
 
+- PORT: port the server listens on (default: 58080)
 - MODEL_NAME: alias the model is served under (`--alias`)
 - MODEL_FILE: GGUF file under ./models to load
 - NUM_CTX: total context size across all parallel slots (`--ctx-size`)
